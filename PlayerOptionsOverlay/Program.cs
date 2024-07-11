@@ -1,4 +1,4 @@
-﻿using ImGuiNET;
+using ImGuiNET;
 using ClickableTransparentOverlay;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -30,17 +30,17 @@ namespace PlayerOptions
         float FOV = 0;
         float VFOV = 0;
         float Gamma = 0;
-        float meleeDepth = 0; 
-        float meleeHorizontal = 0; 
+        float meleeDepth = 0;
+        float meleeHorizontal = 0;
         float meleeVertical = 0;
-        float pistolDepth = 0; 
-        float pistolHorizontal = 0; 
+        float pistolDepth = 0;
+        float pistolHorizontal = 0;
         float pistolVertical = 0;
-        float rifleDepth = 0; 
-        float rifleHorizontal = 0; 
+        float rifleDepth = 0;
+        float rifleHorizontal = 0;
         float rifleVertical = 0;
-        float heavyDepth = 0; 
-        float heavyHorizontal = 0; 
+        float heavyDepth = 0;
+        float heavyHorizontal = 0;
         float heavyVertical = 0;
 
         public string FovAddress;
@@ -65,7 +65,7 @@ namespace PlayerOptions
             if (showWindow)
             {
                 ImGui.Begin("Player Options");
-               
+
                 ImGui.SetWindowSize(new Vector2(850, 580));
                 ImGui.BeginChild("Game Selection", new Vector2(240, 20));
                 ImGui.Combo("Game", ref GameComboIndex, GameComboItems, GameComboItems.Length);
@@ -78,7 +78,7 @@ namespace PlayerOptions
                 ImGui.SliderFloat("Vehicle field of view", ref VFOV, 1, 150);
                 ImGui.SliderFloat("Gamma", ref Gamma, -16, 16);
                 ImGui.EndChild();
-                
+
                 ImGui.BeginChild("Melee view offset", new Vector2(1080, 100));
                 ImGui.Text(" ");
                 ImGui.Text("Melee view offsets");
@@ -86,7 +86,7 @@ namespace PlayerOptions
                 ImGui.SliderFloat("Melee horizontal", ref meleeHorizontal, -500, 500);
                 ImGui.SliderFloat("Melee vertical", ref meleeVertical, -500, 500);
                 ImGui.EndChild();
-                
+
                 ImGui.BeginChild("Pistol view offset", new Vector2(1080, 100));
                 ImGui.Text(" ");
                 ImGui.Text("Pistol view offsets");
@@ -117,15 +117,15 @@ namespace PlayerOptions
 
         public Program()
         {
-            Task task = Task.Run(async () => 
-            {   
+            Task task = Task.Run(async () =>
+            {
                 while (true)
                 {
                     await GetProcess();
                     await CheckGameIndex();
                     await GetValues();
                     await SetValues();
-                    
+
                     await Task.Delay(1);
                 }
             });
@@ -214,13 +214,13 @@ namespace PlayerOptions
 
         public async Task SetValues()
         {
-            float[] previousValues = new float[] { FOV, Gamma, meleeDepth, meleeHorizontal, meleeVertical, pistolDepth, pistolHorizontal, pistolVertical, rifleDepth, rifleHorizontal, rifleVertical, heavyDepth, heavyHorizontal, heavyVertical, VFOV};
+            float[] previousValues = new float[] { FOV, Gamma, meleeDepth, meleeHorizontal, meleeVertical, pistolDepth, pistolHorizontal, pistolVertical, rifleDepth, rifleHorizontal, rifleVertical, heavyDepth, heavyHorizontal, heavyVertical, VFOV };
 
             while (true)
             {
                 await Task.Delay(1);
 
-                float[] currentValues = new float[] { FOV, Gamma, meleeDepth, meleeHorizontal, meleeVertical, pistolDepth, pistolHorizontal, pistolVertical, rifleDepth, rifleHorizontal, rifleVertical, heavyDepth, heavyHorizontal, heavyVertical, VFOV};
+                float[] currentValues = new float[] { FOV, Gamma, meleeDepth, meleeHorizontal, meleeVertical, pistolDepth, pistolHorizontal, pistolVertical, rifleDepth, rifleHorizontal, rifleVertical, heavyDepth, heavyHorizontal, heavyVertical, VFOV };
 
                 for (int i = 0; i < previousValues.Length; i++)
                 {
@@ -266,7 +266,7 @@ namespace PlayerOptions
                             case 7:
                                 string pistolVerticalValue = pistolVertical.ToString();
                                 memory.WriteMemory(PistolsVertical, "float", pistolVerticalValue);
-                                break; 
+                                break;
                             case 8:
                                 string rifleDepthValue = rifleDepth.ToString();
                                 memory.WriteMemory(RiflesDepth, "float", rifleDepthValue);
@@ -303,7 +303,7 @@ namespace PlayerOptions
                                 }
                                 break;
                         }
-                        
+
                         previousValues[i] = currentValues[i];
                     }
                 }
@@ -343,22 +343,26 @@ namespace PlayerOptions
             }
         }
 
+        // This is the worst way to do this, I hate myself for writing this wall of bullshit
+        // When I have more time I'll rewite this the proper way. - Sean
+
+        #region Wall of bullshit
         public void SetReachAddresses()
         {
             FovAddress = "haloreach.dll+2A03D4C";
             VFovAddress = "haloreach.dll+2A21890";
-            MeleeDepth = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,0xB3C";
-            MeleeHorizontal = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,0xB40";
-            MeleeVertical = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,0xB44";
-            PistolsDepth = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,0xB48";
-            PistolsHorizontal = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,0xB4C";
-            PistolsVertical = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,0xB50";
-            RiflesDepth = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,0xB54";
-            RiflesHorizontal = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,0xB58";
-            RiflesVertical = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,0xB5C";
-            HeavyDepth = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,0xB60";
-            HeavyHorizontal = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,0xB64";
-            HeavyVertical = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,0xB68";
+            MeleeDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0xB3C";
+            MeleeHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0xB40";
+            MeleeVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0xB44";
+            PistolsDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0xB48";
+            PistolsHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0xB4C";
+            PistolsVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0xB50";
+            RiflesDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0xB54";
+            RiflesHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0xB58";
+            RiflesVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0xB5C";
+            HeavyDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0xB60";
+            HeavyHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0xB64";
+            HeavyVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0xB68";
 
             GetValues();
         }
@@ -367,18 +371,18 @@ namespace PlayerOptions
         {
             FovAddress = "";
             VFovAddress = "";
-            MeleeDepth = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x358C";
-            MeleeHorizontal = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x3588";
-            MeleeVertical = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x3584";
-            PistolsDepth = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x3580";
-            PistolsHorizontal = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x357C";
-            PistolsVertical = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x3578";
-            RiflesDepth = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x3574";
-            RiflesHorizontal = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x3570";
-            RiflesVertical = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x356C";
-            HeavyDepth = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x3568";
-            HeavyHorizontal = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x3564";
-            HeavyVertical = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x3560";
+            MeleeDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x358C";
+            MeleeHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x3588";
+            MeleeVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x3584";
+            PistolsDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x3580";
+            PistolsHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x357C";
+            PistolsVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x3578";
+            RiflesDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x3574";
+            RiflesHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x3570";
+            RiflesVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x356C";
+            HeavyDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x3568";
+            HeavyHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x3564";
+            HeavyVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x3560";
 
             GetValues();
         }
@@ -387,18 +391,18 @@ namespace PlayerOptions
         {
             FovAddress = "";
             VFovAddress = "";
-            MeleeDepth = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x2AC0";
-            MeleeHorizontal = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x2ABC";
-            MeleeVertical = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x2AB8";
-            PistolsDepth = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x2AB4";
-            PistolsHorizontal = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x2AB0";
-            PistolsVertical = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x2AAC";
-            RiflesDepth = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x2AA8";
-            RiflesHorizontal = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x2AA4";
-            RiflesVertical = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x2AA0";
-            HeavyDepth = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x2A9C";
-            HeavyHorizontal = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x2A98";
-            HeavyVertical = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x2A94";
+            MeleeDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x2AC0";
+            MeleeHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x2ABC";
+            MeleeVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x2AB8";
+            PistolsDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x2AB4";
+            PistolsHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x2AB0";
+            PistolsVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x2AAC";
+            RiflesDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x2AA8";
+            RiflesHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x2AA4";
+            RiflesVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x2AA0";
+            HeavyDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x2A9C";
+            HeavyHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x2A98";
+            HeavyVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x2A94";
 
             GetValues();
         }
@@ -407,18 +411,18 @@ namespace PlayerOptions
         {
             FovAddress = "halo3.dll+2D3DDE4";
             VFovAddress = "halo3.dll+2D3DDE8";
-            MeleeDepth = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x1FF4";
-            MeleeHorizontal = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x1FF0";
-            MeleeVertical = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x1FEC";
-            PistolsDepth = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x1FE8";
-            PistolsHorizontal = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x1FE4";
-            PistolsVertical = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x1FE0";
-            RiflesDepth = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x1FDC";
-            RiflesHorizontal = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x1FD8";
-            RiflesVertical = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x1FD4";
-            HeavyDepth = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x1FD0";
-            HeavyHorizontal = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x1FCC";
-            HeavyVertical = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x1FC8";
+            MeleeDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1FF4";
+            MeleeHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1FF0";
+            MeleeVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1FEC";
+            PistolsDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1FE8";
+            PistolsHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1FE4";
+            PistolsVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1FE0";
+            RiflesDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1FDC";
+            RiflesHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1FD8";
+            RiflesVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1FD4";
+            HeavyDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1FD0";
+            HeavyHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1FCC";
+            HeavyVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1FC8";
 
             GetValues();
         }
@@ -427,18 +431,18 @@ namespace PlayerOptions
         {
             FovAddress = "halo3odst.dll+2D818D8";
             VFovAddress = "halo3odst.dll+2D818DC";
-            MeleeDepth = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,0x70";
-            MeleeHorizontal = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,0x74";
-            MeleeVertical = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,0x78";
-            PistolsDepth = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,0x7C";
-            PistolsHorizontal = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,0x80";
-            PistolsVertical = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,0x84";
-            RiflesDepth = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,0x88";
-            RiflesHorizontal = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,0x8C";
-            RiflesVertical = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,0x90";
-            HeavyDepth = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,0x94";
-            HeavyHorizontal = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,0x98";
-            HeavyVertical = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,0x9C";
+            MeleeDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0x70";
+            MeleeHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0x74";
+            MeleeVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0x78";
+            PistolsDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0x7C";
+            PistolsHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0x80";
+            PistolsVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0x84";
+            RiflesDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0x88";
+            RiflesHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0x8C";
+            RiflesVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0x90";
+            HeavyDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0x94";
+            HeavyHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0x98";
+            HeavyVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0x9C";
 
             GetValues();
         }
@@ -447,26 +451,32 @@ namespace PlayerOptions
         {
             FovAddress = "halo4.dll+30EBEEC";
             VFovAddress = "halo4.dll+30EBEF0";
-            MeleeDepth = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x1528";
-            MeleeHorizontal = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x1524";
-            MeleeVertical = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x1520";
-            PistolsDepth = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x151C";
-            PistolsHorizontal = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x1518";
-            PistolsVertical = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x1514";
-            RiflesDepth = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x1510";
-            RiflesHorizontal = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x150C";
-            RiflesVertical = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x1508";
-            HeavyDepth = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x1504";
-            HeavyHorizontal = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x1500";
-            HeavyVertical = "mcc-win64-shipping.exe+03FFDC50,0xAF8,0x20,0x1A8,0x60,-0x14FC";
+            MeleeDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1528";
+            MeleeHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1524";
+            MeleeVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1520";
+            PistolsDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x151C";
+            PistolsHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1518";
+            PistolsVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1514";
+            RiflesDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1510";
+            RiflesHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x150C";
+            RiflesVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1508";
+            HeavyDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1504";
+            HeavyHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1500";
+            HeavyVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x14FC";
 
             GetValues();
         }
 
+        #endregion
+
         public static void Main(string[] args)
         {
             Console.WriteLine("");
+            Console.WriteLine();
+            Console.WriteLine("Message me on Discord if there are any issues: @HybridsEgo\n(Your mileage may vary with FOV and Gamma options.)");
+            Console.WriteLine();
             Console.WriteLine("Use 'C' key to show/hide the overlay!");
+            Console.WriteLine("Closing this window will kill the overlay.");
             Console.WriteLine();
             Program program = new Program();
             program.Start().Wait();
