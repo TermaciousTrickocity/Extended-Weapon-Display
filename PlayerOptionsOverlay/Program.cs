@@ -9,23 +9,30 @@ namespace PlayerOptions
 {
     public class Program : Overlay
     {
+        // Process names for both Steam & WinStore
+        public string mccProcessSteam = "MCC-Win64-Shipping";
+        public string mccProcessWinstore = "MCCWinStore-Win64-Shipping"; // Will fix this later.
+
+        //
+        // Pointer for the Halo: reach's 'Melee Depth' (float) option.
+        // Just find this pointer and every other game should work.
+        public string BaseAddress = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,";
+        //
+        // Add the pointer with all offsets excluding the final offset.
+        // The final offset goes to 'GameOffset' in 'CheckGameIndex()'
+        // If it is wildly fucked up you might have to adjust each game in 'CheckGameIndex()' which is at the bottom of '#region Memory'.
+        //   
+
+        #region Overlay
+
         [DllImport("user32.dll")]
         static extern short GetAsyncKeyState(int vKey);
-
-        public Mem memory = new Mem();
-        Process p;
-
-        public string mccProcessSteam = "MCC-Win64-Shipping";
-        public string mccProcessWinstore = "MCCWinStore-Win64-Shipping";
-        private string selectedProcessName;
-
-        public bool modulesUpdated = false;
 
         bool showWindow = true;
         bool startup = false;
 
-        int GameComboIndex = 0;
         string[] GameComboItems = { "Halo: Reach", "Halo CE", "Halo 2", "Halo 3", "Halo 3: ODST", "Halo 4" };
+        int GameComboIndex = 0;
 
         float FOV = 0;
         float VFOV = 0;
@@ -42,23 +49,6 @@ namespace PlayerOptions
         float heavyDepth = 0;
         float heavyHorizontal = 0;
         float heavyVertical = 0;
-
-        public string FovAddress;
-        public string VFovAddress;
-        public string GammaAddress = "mcc-win64-shipping.exe+3EF36A4";
-
-        public string MeleeDepth;
-        public string MeleeHorizontal;
-        public string MeleeVertical;
-        public string PistolsDepth;
-        public string PistolsHorizontal;
-        public string PistolsVertical;
-        public string RiflesDepth;
-        public string RiflesHorizontal;
-        public string RiflesVertical;
-        public string HeavyDepth;
-        public string HeavyHorizontal;
-        public string HeavyVertical;
 
         protected override void Render()
         {
@@ -114,22 +104,24 @@ namespace PlayerOptions
                 ImGui.End();
             }
         }
+        #endregion
 
-        public Program()
-        {
-            Task task = Task.Run(async () =>
-            {
-                while (true)
-                {
-                    await GetProcess();
-                    await CheckGameIndex();
-                    await GetValues();
-                    await SetValues();
+        #region Memory
 
-                    await Task.Delay(1);
-                }
-            });
-        }
+        public Mem memory = new Mem();
+        Process p;
+
+        private string selectedProcessName;
+
+        public bool modulesUpdated = false;
+
+        public string FovAddress;
+        public string VFovAddress;
+        public string GammaAddress;
+
+        // Dont change this unless you know what you are doing
+        string GameOffset = "0x00";
+        bool isNegitive = false;
 
         public async Task GetProcess()
         {
@@ -153,14 +145,13 @@ namespace PlayerOptions
                 p = Process.GetProcessesByName(selectedProcessName)[0];
                 memory.OpenProcess(p.Id);
 
+                if (memory == null || memory.theProc == null || selectedProcessName == null) return;
+
                 if (startup == false)
                 {
                     Console.WriteLine("Found: " + selectedProcessName.ToString() + " (" + p.Id + ")");
                     startup = true;
                 }
-
-                if (memory == null) return;
-                if (memory.theProc == null) return;
 
                 memory.theProc.Refresh();
                 memory.modules.Clear();
@@ -182,33 +173,127 @@ namespace PlayerOptions
             }
         }
 
-        public async Task GetValues()
+        public async Task GetValues() // Gonna do another rewrite at somepoint 
         {
             try
             {
+                int ConvertedOffset;
+                ConvertedOffset = Convert.ToInt32(GameOffset, 16);
+
                 FOV = memory.ReadFloat(FovAddress);
-                VFOV = memory.ReadFloat(VFovAddress);
                 Gamma = memory.ReadFloat(GammaAddress);
 
-                meleeDepth = memory.ReadFloat(MeleeDepth);
-                meleeHorizontal = memory.ReadFloat(MeleeHorizontal);
-                meleeVertical = memory.ReadFloat(MeleeVertical);
+                if (isNegitive == false)
+                {
+                    string meleeDepthString = "0x" + ConvertedOffset.ToString("X");
+                    meleeDepth = memory.ReadFloat(BaseAddress + meleeDepthString);
 
-                pistolDepth = memory.ReadFloat(PistolsDepth);
-                pistolHorizontal = memory.ReadFloat(PistolsHorizontal);
-                pistolVertical = memory.ReadFloat(PistolsVertical);
+                    ConvertedOffset += 4;
+                    string meleeHorizontalString = "0x" + ConvertedOffset.ToString("X");
+                    meleeHorizontal = memory.ReadFloat(BaseAddress + meleeHorizontalString);
 
-                rifleDepth = memory.ReadFloat(RiflesDepth);
-                rifleHorizontal = memory.ReadFloat(RiflesHorizontal);
-                rifleVertical = memory.ReadFloat(RiflesVertical);
+                    ConvertedOffset += 4;
+                    string meleeVerticalString = "0x" + ConvertedOffset.ToString("X");
+                    meleeVertical = memory.ReadFloat(BaseAddress + meleeVerticalString);
 
-                heavyDepth = memory.ReadFloat(HeavyDepth);
-                heavyHorizontal = memory.ReadFloat(HeavyHorizontal);
-                heavyVertical = memory.ReadFloat(HeavyVertical);
+                    ConvertedOffset += 4;
+                    string pistolDepthString = "0x" + ConvertedOffset.ToString("X");
+                    pistolDepth = memory.ReadFloat(BaseAddress + pistolDepthString);
+
+                    ConvertedOffset += 4;
+                    string pistolHorizontalString = "0x" + ConvertedOffset.ToString("X");
+                    pistolHorizontal = memory.ReadFloat(BaseAddress + pistolHorizontalString);
+
+                    ConvertedOffset += 4;
+                    string pistolVerticalString = "0x" + ConvertedOffset.ToString("X");
+                    pistolVertical = memory.ReadFloat(BaseAddress + pistolVerticalString);
+
+                    ConvertedOffset += 4;
+                    string rifleDepthString = "0x" + ConvertedOffset.ToString("X");
+                    rifleDepth = memory.ReadFloat(BaseAddress + rifleDepthString);
+
+                    ConvertedOffset += 4;
+                    string rifleHorizontalString = "0x" + ConvertedOffset.ToString("X");
+                    rifleHorizontal = memory.ReadFloat(BaseAddress + rifleHorizontalString);
+
+                    ConvertedOffset += 4;
+                    string rifleVerticalString = "0x" + ConvertedOffset.ToString("X");
+                    rifleVertical = memory.ReadFloat(BaseAddress + rifleVerticalString);
+
+                    ConvertedOffset += 4;
+                    string heavyDepthString = "0x" + ConvertedOffset.ToString("X");
+                    heavyDepth = memory.ReadFloat(BaseAddress + heavyDepthString);
+
+                    ConvertedOffset += 4;
+                    string heavyHorizontalString = "0x" + ConvertedOffset.ToString("X");
+                    heavyHorizontal = memory.ReadFloat(BaseAddress + heavyHorizontalString);
+
+                    ConvertedOffset += 4;
+                    string heavyVerticalString = "0x" + ConvertedOffset.ToString("X");
+                    heavyVertical = memory.ReadFloat(BaseAddress + heavyVerticalString);
+
+                    ConvertedOffset -= 44;
+                }
+                else
+                {
+                    string meleeDepthString = "0x-" + ConvertedOffset.ToString("X");
+                    meleeDepth = memory.ReadFloat(BaseAddress + meleeDepthString);
+
+                    ConvertedOffset -= 4;
+                    string meleeHorizontalString = "0x-" + ConvertedOffset.ToString("X");
+                    meleeHorizontal = memory.ReadFloat(BaseAddress + meleeHorizontalString);
+
+                    ConvertedOffset -= 4;
+                    string meleeVerticalString = "0x-" + ConvertedOffset.ToString("X");
+                    meleeVertical = memory.ReadFloat(BaseAddress + meleeVerticalString);
+
+                    ConvertedOffset -= 4;
+                    string pistolDepthString = "0x-" + ConvertedOffset.ToString("X");
+                    pistolDepth = memory.ReadFloat(BaseAddress + pistolDepthString);
+
+                    ConvertedOffset -= 4;
+                    string pistolHorizontalString = "0x-" + ConvertedOffset.ToString("X");
+                    pistolHorizontal = memory.ReadFloat(BaseAddress + pistolHorizontalString);
+
+                    ConvertedOffset -= 4;
+                    string pistolVerticalString = "0x-" + ConvertedOffset.ToString("X");
+                    pistolVertical = memory.ReadFloat(BaseAddress + pistolVerticalString);
+
+                    ConvertedOffset -= 4;
+                    string rifleDepthString = "0x-" + ConvertedOffset.ToString("X");
+                    rifleDepth = memory.ReadFloat(BaseAddress + rifleDepthString);
+
+                    ConvertedOffset -= 4;
+                    string rifleHorizontalString = "0x-" + ConvertedOffset.ToString("X");
+                    rifleHorizontal = memory.ReadFloat(BaseAddress + rifleHorizontalString);
+
+                    ConvertedOffset -= 4;
+                    string rifleVerticalString = "0x-" + ConvertedOffset.ToString("X");
+                    rifleVertical = memory.ReadFloat(BaseAddress + rifleVerticalString);
+
+                    ConvertedOffset -= 4;
+                    string heavyDepthString = "0x-" + ConvertedOffset.ToString("X");
+                    heavyDepth = memory.ReadFloat(BaseAddress + heavyDepthString);
+
+                    ConvertedOffset -= 4;
+                    string heavyHorizontalString = "0x-" + ConvertedOffset.ToString("X");
+                    heavyHorizontal = memory.ReadFloat(BaseAddress + heavyHorizontalString);
+
+                    ConvertedOffset -= 4;
+                    string heavyVerticalString = "0x-" + ConvertedOffset.ToString("X");
+                    heavyVertical = memory.ReadFloat(BaseAddress + heavyVerticalString);
+
+                    ConvertedOffset += 44;
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                Console.WriteLine("An error ocurred while trying to get values.\nDid you launch MCC with EAC turned off?");
+                Console.WriteLine("Exception: " + ex.Message);
+                Console.WriteLine();
+                Console.WriteLine("-=-=-=-=-=-=-");
+                Console.WriteLine();
+                Console.WriteLine("An error ocurred while trying to get values.\n- Try relaunching with EAC off.\n- Did MCC get an update recently?");
+                Console.ReadKey();
             }
         }
 
@@ -220,93 +305,230 @@ namespace PlayerOptions
             {
                 await Task.Delay(1);
 
+                int ConvertedOffset;
+                ConvertedOffset = Convert.ToInt32(GameOffset, 16);
+
                 float[] currentValues = new float[] { FOV, Gamma, meleeDepth, meleeHorizontal, meleeVertical, pistolDepth, pistolHorizontal, pistolVertical, rifleDepth, rifleHorizontal, rifleVertical, heavyDepth, heavyHorizontal, heavyVertical, VFOV };
 
                 for (int i = 0; i < previousValues.Length; i++)
                 {
                     if (currentValues[i] != previousValues[i])
                     {
-                        switch (i)
+                        if (isNegitive == false)
                         {
-                            case 0:
-                                if (GameComboIndex == 1 || GameComboIndex == 2)
-                                {
-                                    return;
-                                }
-                                else
-                                {
-                                    string fovValue = FOV.ToString();
-                                    memory.WriteMemory(FovAddress, "float", fovValue);
-                                }
-                                break;
-                            case 1:
-                                string gammaValue = Gamma.ToString();
-                                memory.WriteMemory(GammaAddress, "float", gammaValue);
-                                break;
-                            case 2:
-                                string meleeDepthValue = meleeDepth.ToString();
-                                memory.WriteMemory(MeleeDepth, "float", meleeDepthValue);
-                                break;
-                            case 3:
-                                string meleeHorizontalValue = meleeHorizontal.ToString();
-                                memory.WriteMemory(MeleeHorizontal, "float", meleeHorizontalValue);
-                                break;
-                            case 4:
-                                string meleeVerticalValue = meleeVertical.ToString();
-                                memory.WriteMemory(MeleeVertical, "float", meleeVerticalValue);
-                                break;
-                            case 5:
-                                string pistolDepthValue = pistolDepth.ToString();
-                                memory.WriteMemory(PistolsDepth, "float", pistolDepthValue);
-                                break;
-                            case 6:
-                                string pistolHorizontalValue = pistolHorizontal.ToString();
-                                memory.WriteMemory(PistolsHorizontal, "float", pistolHorizontalValue);
-                                break;
-                            case 7:
-                                string pistolVerticalValue = pistolVertical.ToString();
-                                memory.WriteMemory(PistolsVertical, "float", pistolVerticalValue);
-                                break;
-                            case 8:
-                                string rifleDepthValue = rifleDepth.ToString();
-                                memory.WriteMemory(RiflesDepth, "float", rifleDepthValue);
-                                break;
-                            case 9:
-                                string rifleHorizontalValue = rifleHorizontal.ToString();
-                                memory.WriteMemory(RiflesHorizontal, "float", rifleHorizontalValue);
-                                break;
-                            case 10:
-                                string rifleVerticalValue = rifleVertical.ToString();
-                                memory.WriteMemory(RiflesVertical, "float", rifleVerticalValue);
-                                break;
-                            case 11:
-                                string heavyDepthValue = heavyDepth.ToString();
-                                memory.WriteMemory(HeavyDepth, "float", heavyDepthValue);
-                                break;
-                            case 12:
-                                string heavyHorizontalValue = heavyHorizontal.ToString();
-                                memory.WriteMemory(HeavyHorizontal, "float", heavyHorizontalValue);
-                                break;
-                            case 13:
-                                string heavyVerticalValue = heavyVertical.ToString();
-                                memory.WriteMemory(HeavyVertical, "float", heavyVerticalValue);
-                                break;
-                            case 14:
-                                if (GameComboIndex == 1 || GameComboIndex == 2)
-                                {
-                                    return;
-                                }
-                                else
-                                {
-                                    string fovValue = VFOV.ToString();
-                                    memory.WriteMemory(VFovAddress, "float", fovValue);
-                                }
-                                break;
+                            switch (i)
+                            {
+                                case 0:
+                                    if (GameComboIndex == 1 || GameComboIndex == 2)
+                                    {
+                                        return;
+                                    }
+                                    else
+                                    {
+                                        string fovValue = FOV.ToString();
+                                        memory.WriteMemory(FovAddress, "float", fovValue);
+                                    }
+                                    break;
+                                case 1:
+                                    string gammaValue = Gamma.ToString();
+                                    memory.WriteMemory(GammaAddress, "float", gammaValue);
+                                    break;
+                                case 2:
+                                    ConvertedOffset += 0;
+                                    string meleeDepthValue = meleeDepth.ToString();
+                                    string meleeDepthString = "0x" + ConvertedOffset.ToString("X");
+                                    memory.WriteMemory(BaseAddress + meleeDepthString, "float", meleeDepthValue);
+                                    break;
+                                case 3:
+                                    ConvertedOffset += 4;
+                                    string meleeHorizontalValue = meleeHorizontal.ToString();
+                                    string meleeHorizontalString = "0x" + ConvertedOffset.ToString("X");
+                                    memory.WriteMemory(BaseAddress + meleeHorizontalString, "float", meleeHorizontalValue);
+                                    break;
+                                case 4:
+                                    ConvertedOffset += 8;
+                                    string meleeVerticalValue = meleeVertical.ToString();
+                                    string meleeVerticalString = "0x" + ConvertedOffset.ToString("X");
+                                    memory.WriteMemory(BaseAddress + meleeVerticalString, "float", meleeVerticalValue);
+                                    break;
+                                case 5:
+                                    ConvertedOffset += 12;
+                                    string pistolDepthValue = pistolDepth.ToString();
+                                    string pistolDepthString = "0x" + ConvertedOffset.ToString("X");
+                                    memory.WriteMemory(BaseAddress + pistolDepthString, "float", pistolDepthValue);
+                                    break;
+                                case 6:
+                                    ConvertedOffset += 16;
+                                    string pistolHorizontalValue = pistolHorizontal.ToString();
+                                    string pistolHorizontalString = "0x" + ConvertedOffset.ToString("X");
+                                    memory.WriteMemory(BaseAddress + pistolHorizontalString, "float", pistolHorizontalValue);
+                                    break;
+                                case 7:
+                                    ConvertedOffset += 20;
+                                    string pistolVerticalValue = pistolVertical.ToString();
+                                    string pistolVerticalString = "0x" + ConvertedOffset.ToString("X");
+                                    memory.WriteMemory(BaseAddress + pistolVerticalString, "float", pistolVerticalValue);
+                                    break;
+                                case 8:
+                                    ConvertedOffset += 24;
+                                    string rifleDepthValue = rifleDepth.ToString();
+                                    string rifleDepthString = "0x" + ConvertedOffset.ToString("X");
+                                    memory.WriteMemory(BaseAddress + rifleDepthString, "float", rifleDepthValue);
+                                    break;
+                                case 9:
+                                    ConvertedOffset += 28;
+                                    string rifleHorizontalValue = rifleHorizontal.ToString();
+                                    string rifleHorizontalString = "0x" + ConvertedOffset.ToString("X");
+                                    memory.WriteMemory(BaseAddress + rifleHorizontalString, "float", rifleHorizontalValue);
+                                    break;
+                                case 10:
+                                    ConvertedOffset += 32;
+                                    string rifleVerticalValue = rifleVertical.ToString();
+                                    string rifleVerticalString = "0x" + ConvertedOffset.ToString("X");
+                                    memory.WriteMemory(BaseAddress + rifleVerticalString, "float", rifleVerticalValue);
+                                    break;
+                                case 11:
+                                    ConvertedOffset += 36;
+                                    string heavyDepthValue = heavyDepth.ToString();
+                                    string heavyDepthString = "0x" + ConvertedOffset.ToString("X");
+                                    memory.WriteMemory(BaseAddress + heavyDepthString, "float", heavyDepthValue);
+                                    break;
+                                case 12:
+                                    ConvertedOffset += 40;
+                                    string heavyHorizontalValue = heavyHorizontal.ToString();
+                                    string heavyHorizontalString = "0x" + ConvertedOffset.ToString("X");
+                                    memory.WriteMemory(BaseAddress + heavyHorizontalString, "float", heavyHorizontalValue);
+                                    break;
+                                case 13:
+                                    ConvertedOffset += 44;
+                                    string heavyVerticalValue = heavyVertical.ToString();
+                                    string heavyVerticalString = "0x" + ConvertedOffset.ToString("X");
+                                    memory.WriteMemory(BaseAddress + heavyVerticalString, "float", heavyVerticalValue);
+                                    break;
+                                case 14:
+                                    if (GameComboIndex == 1 || GameComboIndex == 2)
+                                    {
+                                        return;
+                                    }
+                                    else
+                                    {
+                                        string fovValue = VFOV.ToString();
+                                        memory.WriteMemory(VFovAddress, "float", fovValue);
+                                    }
+                                    break;
+                            }
                         }
+                        else
+                        {
+                            switch (i)
+                            {
+                                case 0:
+                                    if (GameComboIndex == 1 || GameComboIndex == 2)
+                                    {
+                                        return;
+                                    }
+                                    else
+                                    {
+                                        string fovValue = FOV.ToString();
+                                        memory.WriteMemory(FovAddress, "float", fovValue);
+                                    }
+                                    break;
+                                case 1:
+                                    string gammaValue = Gamma.ToString();
+                                    memory.WriteMemory(GammaAddress, "float", gammaValue);
+                                    break;
+                                case 2:
+                                    ConvertedOffset -= 0;
+                                    string meleeDepthValue = meleeDepth.ToString();
+                                    string meleeDepthString = "0x" + ConvertedOffset.ToString("X");
+                                    memory.WriteMemory(BaseAddress + meleeDepthString, "float", meleeDepthValue);
+                                    break;
+                                case 3:
+                                    ConvertedOffset -= 4;
+                                    string meleeHorizontalValue = meleeHorizontal.ToString();
+                                    string meleeHorizontalString = "0x" + ConvertedOffset.ToString("X");
+                                    memory.WriteMemory(BaseAddress + meleeHorizontalString, "float", meleeHorizontalValue);
+                                    break;
+                                case 4:
+                                    ConvertedOffset -= 8;
+                                    string meleeVerticalValue = meleeVertical.ToString();
+                                    string meleeVerticalString = "0x" + ConvertedOffset.ToString("X");
+                                    memory.WriteMemory(BaseAddress + meleeVerticalString, "float", meleeVerticalValue);
+                                    break;
+                                case 5:
+                                    ConvertedOffset -= 12;
+                                    string pistolDepthValue = pistolDepth.ToString();
+                                    string pistolDepthString = "0x" + ConvertedOffset.ToString("X");
+                                    memory.WriteMemory(BaseAddress + pistolDepthString, "float", pistolDepthValue);
+                                    break;
+                                case 6:
+                                    ConvertedOffset -= 16;
+                                    string pistolHorizontalValue = pistolHorizontal.ToString();
+                                    string pistolHorizontalString = "0x" + ConvertedOffset.ToString("X");
+                                    memory.WriteMemory(BaseAddress + pistolHorizontalString, "float", pistolHorizontalValue);
+                                    break;
+                                case 7:
+                                    ConvertedOffset -= 20;
+                                    string pistolVerticalValue = pistolVertical.ToString();
+                                    string pistolVerticalString = "0x" + ConvertedOffset.ToString("X");
+                                    memory.WriteMemory(BaseAddress + pistolVerticalString, "float", pistolVerticalValue);
+                                    break;
+                                case 8:
+                                    ConvertedOffset -= 24;
+                                    string rifleDepthValue = rifleDepth.ToString();
+                                    string rifleDepthString = "0x-" + ConvertedOffset.ToString("X");
+                                    memory.WriteMemory(BaseAddress + rifleDepthString, "float", rifleDepthValue);
+                                    break;
+                                case 9:
+                                    ConvertedOffset -= 28;
+                                    string rifleHorizontalValue = rifleHorizontal.ToString();
+                                    string rifleHorizontalString = "0x-" + ConvertedOffset.ToString("X");
+                                    memory.WriteMemory(BaseAddress + rifleHorizontalString, "float", rifleHorizontalValue);
+                                    break;
+                                case 10:
+                                    ConvertedOffset -= 32;
+                                    string rifleVerticalValue = rifleVertical.ToString();
+                                    string rifleVerticalString = "0x-" + ConvertedOffset.ToString("X");
+                                    memory.WriteMemory(BaseAddress + rifleVerticalString, "float", rifleVerticalValue);
+                                    break;
+                                case 11:
+                                    ConvertedOffset -= 36;
+                                    string heavyDepthValue = heavyDepth.ToString();
+                                    string heavyDepthString = "0x-" + ConvertedOffset.ToString("X");
+                                    memory.WriteMemory(BaseAddress + heavyDepthString, "float", heavyDepthValue);
+                                    break;
+                                case 12:
+                                    ConvertedOffset -= 40;
+                                    string heavyHorizontalValue = heavyHorizontal.ToString();
+                                    string heavyHorizontalString = "0x-" + ConvertedOffset.ToString("X");
+                                    memory.WriteMemory(BaseAddress + heavyHorizontalString, "float", heavyHorizontalValue);
+                                    break;
+                                case 13:
+                                    ConvertedOffset -= 44;
+                                    string heavyVerticalValue = heavyVertical.ToString();
+                                    string heavyVerticalString = "0x-" + ConvertedOffset.ToString("X");
+                                    memory.WriteMemory(BaseAddress + heavyVerticalString, "float", heavyVerticalValue);
+                                    break;
+                                case 14:
+                                    if (GameComboIndex == 1 || GameComboIndex == 2)
+                                    {
+                                        return;
+                                    }
+                                    else
+                                    {
+                                        string fovValue = VFOV.ToString();
+                                        memory.WriteMemory(VFovAddress, "float", fovValue);
+                                    }
+                                    break;
+                            }
+                        }
+                        
 
                         previousValues[i] = currentValues[i];
                     }
+
                 }
+                
 
                 CheckGameIndex();
 
@@ -320,157 +542,65 @@ namespace PlayerOptions
 
         public async Task CheckGameIndex()
         {
+            GammaAddress = "mcc-win64-shipping.exe+3EF26A4";
+
             switch (GameComboIndex)
             {
                 case 0: // Halo: Reach
-                    SetReachAddresses();
+                    FovAddress = "haloreach.dll+2A03D4C";
+                    isNegitive = false;
+                    GameOffset = "0xB3C";
                     break;
                 case 1: // Halo CE
-                    SetCEAddresses();
+                    FovAddress = "";
+                    isNegitive = true;
+                    GameOffset = "0x358C";
                     break;
                 case 2: // Halo 2
-                    SetH2Addresses();
+                    FovAddress = "";
+                    isNegitive = true;
+                    GameOffset = "0x2AC0";
                     break;
                 case 3: // Halo 3
-                    SetH3Addresses();
+                    FovAddress = "halo3.dll+2D3DDE4";
+                    isNegitive = true;
+                    GameOffset = "0x1FF4";
                     break;
                 case 4: // Halo 3: ODST
-                    SetH3ODSTAddresses();
+                    FovAddress = "halo3odst.dll+2D818D8";
+                    isNegitive = false;
+                    GameOffset = "0x70";
                     break;
                 case 5: // Halo 4
-                    SetH4Addresses();
+                    FovAddress = "halo4.dll+30EBEEC";
+                    isNegitive = true;
+                    GameOffset = "0x1528";
                     break;
             }
+
+            await GetValues();
         }
-
-        // This is the worst way to do this, I hate myself for writing this wall of bullshit
-        // When I have more time I'll rewite this the proper way. - Sean
-
-        #region Wall of bullshit
-        public void SetReachAddresses()
-        {
-            FovAddress = "haloreach.dll+2A03D4C";
-            VFovAddress = "haloreach.dll+2A21890";
-            MeleeDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0xB3C";
-            MeleeHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0xB40";
-            MeleeVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0xB44";
-            PistolsDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0xB48";
-            PistolsHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0xB4C";
-            PistolsVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0xB50";
-            RiflesDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0xB54";
-            RiflesHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0xB58";
-            RiflesVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0xB5C";
-            HeavyDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0xB60";
-            HeavyHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0xB64";
-            HeavyVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0xB68";
-
-            GetValues();
-        }
-
-        public void SetCEAddresses()
-        {
-            FovAddress = "";
-            VFovAddress = "";
-            MeleeDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x358C";
-            MeleeHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x3588";
-            MeleeVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x3584";
-            PistolsDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x3580";
-            PistolsHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x357C";
-            PistolsVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x3578";
-            RiflesDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x3574";
-            RiflesHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x3570";
-            RiflesVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x356C";
-            HeavyDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x3568";
-            HeavyHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x3564";
-            HeavyVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x3560";
-
-            GetValues();
-        }
-
-        public void SetH2Addresses()
-        {
-            FovAddress = "";
-            VFovAddress = "";
-            MeleeDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x2AC0";
-            MeleeHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x2ABC";
-            MeleeVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x2AB8";
-            PistolsDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x2AB4";
-            PistolsHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x2AB0";
-            PistolsVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x2AAC";
-            RiflesDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x2AA8";
-            RiflesHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x2AA4";
-            RiflesVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x2AA0";
-            HeavyDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x2A9C";
-            HeavyHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x2A98";
-            HeavyVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x2A94";
-
-            GetValues();
-        }
-
-        public void SetH3Addresses()
-        {
-            FovAddress = "halo3.dll+2D3DDE4";
-            VFovAddress = "halo3.dll+2D3DDE8";
-            MeleeDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1FF4";
-            MeleeHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1FF0";
-            MeleeVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1FEC";
-            PistolsDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1FE8";
-            PistolsHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1FE4";
-            PistolsVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1FE0";
-            RiflesDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1FDC";
-            RiflesHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1FD8";
-            RiflesVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1FD4";
-            HeavyDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1FD0";
-            HeavyHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1FCC";
-            HeavyVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1FC8";
-
-            GetValues();
-        }
-
-        public void SetH3ODSTAddresses()
-        {
-            FovAddress = "halo3odst.dll+2D818D8";
-            VFovAddress = "halo3odst.dll+2D818DC";
-            MeleeDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0x70";
-            MeleeHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0x74";
-            MeleeVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0x78";
-            PistolsDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0x7C";
-            PistolsHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0x80";
-            PistolsVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0x84";
-            RiflesDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0x88";
-            RiflesHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0x8C";
-            RiflesVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0x90";
-            HeavyDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0x94";
-            HeavyHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0x98";
-            HeavyVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,0x9C";
-
-            GetValues();
-        }
-
-        public void SetH4Addresses()
-        {
-            FovAddress = "halo4.dll+30EBEEC";
-            VFovAddress = "halo4.dll+30EBEF0";
-            MeleeDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1528";
-            MeleeHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1524";
-            MeleeVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1520";
-            PistolsDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x151C";
-            PistolsHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1518";
-            PistolsVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1514";
-            RiflesDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1510";
-            RiflesHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x150C";
-            RiflesVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1508";
-            HeavyDepth = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1504";
-            HeavyHorizontal = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x1500";
-            HeavyVertical = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,-0x14FC";
-
-            GetValues();
-        }
-
         #endregion
 
-        public static void Main(string[] args)
+        #region Program
+        public Program()
         {
+            Task task = Task.Run(async () =>
+            {
+                while (true)
+                {
+                    await GetProcess();
+                    await CheckGameIndex();
+                    await GetValues();
+                    await SetValues();
+
+                    await Task.Delay(1);
+                }
+            });
+        }
+
+        public static void Main(string[] args)
+        { 
             Console.WriteLine("");
             Console.WriteLine();
             Console.WriteLine("Message me on Discord if there are any issues: @HybridsEgo\n(Your mileage may vary with FOV and Gamma options.)");
@@ -481,5 +611,6 @@ namespace PlayerOptions
             Program program = new Program();
             program.Start().Wait();
         }
+        #endregion
     }
 }
