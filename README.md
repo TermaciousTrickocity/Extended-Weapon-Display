@@ -10,7 +10,7 @@ If you're trying to build this you'll also need the latest [Memory.dll](https://
 <img src="https://github.com/TermaciousTrickocity/Extended-Weapon-Display/assets/62641541/c0253efa-3c7a-473c-832d-6e4fa994c0ec" width="800" height="450">
 <img src="https://github.com/user-attachments/assets/47b0c763-4639-42de-a1bb-5d23988733bd" width="800" height="450">
 
-## If this breaks for whatever reason, here's how to fix!
+## If this breaks for whatever reason, here's how to fix:
 > Should be very simple unless 343 adds more things to the setting menus. 
 - Open MCC with EAC off.
 - While on the Main Menu, change the Reach Melee to the `min(-20.0)` or `max(15.0)` value and save.
