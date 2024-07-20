@@ -1,17 +1,17 @@
 # Extended weapon display overlay
 
 Allows users to set their weapon display offsets well beyond the standard limits for all games within The Master Chief Collection.
-
-![Overlay](https://github.com/TermaciousTrickocity/Extended-Weapon-Display/assets/62641541/c0253efa-3c7a-473c-832d-6e4fa994c0ec)
-
-- Grab the latest [Memory.dll](https://github.com/erfg12/memory.dll/) release.
 - Install the [.NET 7.0 Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-7.0.14-windows-x64-installer) and [.NET 7.0 Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-7.0.14-windows-x64-installer) before trying to run/build.
 - Launch The Master Chief Collection with EAC off.
 - Use 'C' to toggle the overlay.
 
+![Overlay](https://github.com/TermaciousTrickocity/Extended-Weapon-Display/assets/62641541/c0253efa-3c7a-473c-832d-6e4fa994c0ec)
+![h2](https://github.com/user-attachments/assets/47b0c763-4639-42de-a1bb-5d23988733bd)
+
+If you're trying to build this you'll also need the latest [Memory.dll](https://github.com/erfg12/memory.dll/) release.
+
 ## If this breaks for whatever reason, here's how to fix!
 > Should be very simple unless 343 adds more things to the setting menus. 
-
 - Open MCC with EAC off.
 - While on the Main Menu, change the Reach Melee to the `min(-20.0)` or `max(15.0)` value and save.
 - Exit back to the Main Menu.
