@@ -5,8 +5,6 @@ Allows users to set their weapon display offsets well beyond the standard limits
 - Launch The Master Chief Collection with EAC off.
 - Use 'C' to toggle the overlay.
 
-If you're trying to build from source you'll also need the latest [Memory.dll](https://github.com/erfg12/memory.dll/) release.
-
 <img src="https://github.com/TermaciousTrickocity/Extended-Weapon-Display/assets/62641541/c0253efa-3c7a-473c-832d-6e4fa994c0ec" width="800" height="450">
 <img src="https://github.com/user-attachments/assets/47b0c763-4639-42de-a1bb-5d23988733bd" width="800" height="450">
 
