@@ -16,7 +16,7 @@ namespace PlayerOptions
         //
         // Pointer for the Halo: reach's 'Melee Depth' (float) option.
         // Just find this pointer and every other game should work.
-        public string BaseAddress = "mcc-win64-shipping.exe+03FFCC40,0xAF8,0x20,0x1A8,0x20,";
+        public string BaseAddress = "mcc-win64-shipping.exe+03F66B20,0x08,0x00,0x28,0x50,0x1A8,0x00,";
         //
         // Add the pointer with all offsets excluding the final offset.
         // The final offset goes to 'GameOffset' in 'CheckGameIndex()'
@@ -547,7 +547,7 @@ namespace PlayerOptions
             switch (GameComboIndex)
             {
                 case 0: // Halo: Reach
-                    FovAddress = "haloreach.dll+2A03D4C";
+                    FovAddress = "haloreach.dll+2A03CDC";
                     isNegitive = false;
                     GameOffset = "0xB3C";
                     break;
